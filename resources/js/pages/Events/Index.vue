@@ -1,131 +1,136 @@
 <script setup lang="ts">
-import { BreadcrumbItem } from '@/types';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { Event } from '@/types/event'
-import EventCard from '@/components/EventCard.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ref, computed } from 'vue';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { BreadcrumbItem } from '@/types';
+import { Event } from '@/types/event';
+import { Head, Link } from '@inertiajs/vue3';
+import { SquarePen, Eye } from 'lucide-vue-next';
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious } from '@/components/ui/pagination';
+import { router } from '@inertiajs/vue3';
 
-interface Props {
-    events: Event[]
+interface Paginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number;
+    to: number;
+    // add more fields from Laravel pagination if needed
 }
 
-const props = defineProps<Props>()
-const searchQuery = ref('');
-const searchLocation = ref('');
+interface Props {
+    events: Paginated<Event>;
+}
 
-// Filter events based on search queries
-const filteredEvents = computed(() => {
-    if (!searchQuery.value && !searchLocation.value) return props.events;
-
-    return props.events.filter(event => {
-        const matchesTitle = event.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                            event.description.toLowerCase().includes(searchQuery.value.toLowerCase());
-
-        const matchesLocation = !searchLocation.value ||
-                               event.city.toLowerCase().includes(searchLocation.value.toLowerCase()) ||
-                               event.country.toLowerCase().includes(searchLocation.value.toLowerCase());
-
-        return matchesTitle && matchesLocation;
+function handlePageChange(newPage: number) {
+    router.get(route('events.index'), { page: newPage }, {
+        preserveScroll: true,
+        preserveState: true
     });
-});
-
+}
+const props = defineProps<Props>();
 // Handle add event button click
-const handleAddEvent = () => {
-    // Navigate to event creation page or open modal
-    console.log('Add event clicked');
-    // You can implement the actual navigation or modal opening here
-};
 
 const breadCrumbs: BreadcrumbItem[] = [
     {
         title: 'My Events',
-        href: '/events'
-    }
-]
+        href: '/events',
+    },
+];
 </script>
 
 <template>
     <Head title="My events" />
 
     <AppLayout :breadcrumbs="breadCrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
-            <!-- Header with Add Event button and search -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
-                <Button @click="handleAddEvent" class="flex items-center gap-2">
+        <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+            <div class="flex">
+                <Button :as="Link" :href="route('events.create')" class="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        <path
+                            fill-rule="evenodd"
+                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                            clip-rule="evenodd"
+                        />
                     </svg>
                     Add Event
                 </Button>
-
-                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <div class="relative w-full sm:w-64">
-                        <Input
-                            v-model="searchQuery"
-                            placeholder="Search events..."
-                            class="pr-8"
-                        />
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-
-                    <div class="relative w-full sm:w-48">
-                        <Input
-                            v-model="searchLocation"
-                            placeholder="Filter by location"
-                            class="pr-8"
-                        />
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </div>
-                </div>
             </div>
+            <div>
+                <Table>
+                    <TableCaption>A list of your events.</TableCaption>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead class=""> Title </TableHead>
+                            <TableHead class="w-[200px]"> Image </TableHead>
+                            <TableHead class="max-w-sm">Description</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead> Price </TableHead>
+                            <TableHead> Attendees/Capacity </TableHead>
+                            <TableHead> Address </TableHead>
 
-            <!-- Results count -->
-            <p class="text-sm text-muted-foreground">
-                Showing {{ filteredEvents.length }} {{ filteredEvents.length === 1 ? 'event' : 'events' }}
-            </p>
+                            <TableHead class="text-center"> Actions </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="event in events.data" :key="event.id">
+                            <TableCell class="font-medium">
+                                {{ event.title }}
+                            </TableCell>
+                            <TableCell class="font-medium">
+                                <img
+                                    :src="event.imageUrl || 'https://imgs.search.brave.com/RT802e_LwBpcWwI7b6Ns61xhw4S_aVL7a55bM-tjgoM/rs:fit:0:180:1:0/g:ce/aHR0cHM6Ly9iLnRo/dW1icy5yZWRkaXRt/ZWRpYS5jb20vd2FR/dVVjOXo0Y25HTk5a/UGR4YzlPQTB1UWpm/aGdBcGtzRWxxaDg2/aFN1RS5qcGc'"
+                                    alt="Event image"
+                                    class="w-full h-24 object-cover"
+                                />
+                            </TableCell>
+                            <TableCell class="max-w-sm whitespace-normal">
+                                {{ event.description }}
+                            </TableCell>
+                            <TableCell>
+                                {{ event.date }}
+                            </TableCell>
+                            <TableCell>
+                                {{ event.price }}
+                            </TableCell>
+                            <TableCell> 0/ {{ event.capacity }} </TableCell>
+                            <TableCell class="max-w-xs whitespace-normal">
+                                {{ event.country }}, {{ event.city }}, {{ event.address }}, ZIP: {{ event.zipcode }}
+                            </TableCell>
+                            <TableCell class="flex flex-col items-center justify-center gap-2">
+                                <Button variant="secondary"> <Eye /> </Button>
+                                <Button variant="outline">
+                                    <SquarePen />
+                                </Button>
+                                <Button variant="destructive">X</Button>
+                            </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+                <Pagination @update:page="handlePageChange" v-slot="{ page }" :items-per-page="events.per_page" :total="events.total" :default-page="events.current_page">
+                    <PaginationContent v-slot="{ items }">
+                        <PaginationPrevious />
 
-            <!-- Grid of event cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <EventCard
-                    v-for="event in filteredEvents"
-                    :key="event.id"
-                    :event="event"
-                    @edit="(event) => console.log('Edit event', event)"
-                    @delete="(event) => console.log('Delete event', event)"
-                />
-            </div>
+                        <template v-for="(item, index) in items" :key="index">
+                            <PaginationItem
+                                v-if="item.type === 'page'"
+                                :value="item.value"
+                                :is-active="item.value === page"
+                            >
+                                {{ item.value }}
+                            </PaginationItem>
+                        </template>
 
-            <!-- Empty state -->
-            <div v-if="filteredEvents.length === 0" class="flex flex-col items-center justify-center py-12">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <h3 class="text-lg font-medium">No events found</h3>
-                <p class="text-muted-foreground text-sm mt-1">Try adjusting your search or create a new event.</p>
+                        <PaginationEllipsis :index="4" />
+
+                        <PaginationNext />
+                    </PaginationContent>
+                </Pagination>
             </div>
         </div>
     </AppLayout>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
