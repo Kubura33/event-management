@@ -8,6 +8,18 @@ import { Head, Link } from '@inertiajs/vue3';
 import { SquarePen, Eye } from 'lucide-vue-next';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious } from '@/components/ui/pagination';
 import { router } from '@inertiajs/vue3';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+    Dialog, DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle, DialogTrigger
+} from '@/components/ui/dialog';
+import InputError from '@/components/InputError.vue';
+import { computed, ref } from 'vue';
 
 interface Paginated<T> {
     data: T[];
@@ -17,13 +29,13 @@ interface Paginated<T> {
     total: number;
     from: number;
     to: number;
-    // add more fields from Laravel pagination if needed
 }
 
 interface Props {
     events: Paginated<Event>;
 }
 
+const isProcessing = ref<boolean>(false)
 function handlePageChange(newPage: number) {
     router.get(route('events.index'), { page: newPage }, {
         preserveScroll: true,
@@ -39,6 +51,30 @@ const breadCrumbs: BreadcrumbItem[] = [
         href: '/events',
     },
 ];
+
+//Event deletion
+const confirmation = ref<string>('')
+
+const deleteEvent = (eventSlug: string) => {
+    router.delete(route('events.destroy', {event: eventSlug}),
+        {
+            onSuccess: () => {
+                confirmation.value = ''
+            },
+            onFinish: () => {
+                isProcessing.value = false
+            }
+        })
+}
+
+const isConfirmed = computed(() => {
+    return !(confirmation.value === "permamently delete")
+})
+
+//Show Event
+
+//Edit event
+
 </script>
 
 <template>
@@ -81,7 +117,7 @@ const breadCrumbs: BreadcrumbItem[] = [
                             </TableCell>
                             <TableCell class="font-medium">
                                 <img
-                                    :src="event.imageUrl || 'https://imgs.search.brave.com/RT802e_LwBpcWwI7b6Ns61xhw4S_aVL7a55bM-tjgoM/rs:fit:0:180:1:0/g:ce/aHR0cHM6Ly9iLnRo/dW1icy5yZWRkaXRt/ZWRpYS5jb20vd2FR/dVVjOXo0Y25HTk5a/UGR4YzlPQTB1UWpm/aGdBcGtzRWxxaDg2/aFN1RS5qcGc'"
+                                    :src="event.imageUrl"
                                     alt="Event image"
                                     class="w-full h-24 object-cover"
                                 />
@@ -100,11 +136,41 @@ const breadCrumbs: BreadcrumbItem[] = [
                                 {{ event.country }}, {{ event.city }}, {{ event.address }}, ZIP: {{ event.zipcode }}
                             </TableCell>
                             <TableCell class="flex flex-col items-center justify-center gap-2">
-                                <Button variant="secondary"> <Eye /> </Button>
-                                <Button variant="outline">
+                                <Button :as="Link" :href="route('events.show', {event: event.slug})" variant="secondary"> <Eye /> </Button>
+                                <Button :as="Link" :href="route('events.edit', {event: event.slug})" variant="outline">
                                     <SquarePen />
                                 </Button>
-                                <Button variant="destructive">X</Button>
+
+                                <Dialog>
+                                    <DialogTrigger as-child>
+                                        <Button variant="destructive">X</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <div class="space-y-6" @submit="deleteEvent">
+                                            <DialogHeader class="space-y-3">
+                                                <DialogTitle>Are you sure you want to delete your event?</DialogTitle>
+                                                <DialogDescription>
+                                                    Once your event is deleted, all of its resources and data will also be permanently deleted. Please enter "permamently delete"
+                                                    to confirm you would like to permanently delete your event.
+                                                </DialogDescription>
+                                            </DialogHeader>
+
+                                            <div class="grid gap-2">
+                                                <Label for="confirmation" class="sr-only">Event name</Label>
+                                                <Input id="confirmation" type="text" name="confirmation" v-model="confirmation" />
+                                                <!--                        <InputError :message="form.errors.eventName" />-->
+                                            </div>
+
+                                            <DialogFooter class="gap-2">
+                                                <DialogClose as-child>
+                                                    <Button variant="secondary"> Cancel </Button>
+                                                </DialogClose>
+
+                                                <Button type="submit" variant="destructive" :disabled="isProcessing || isConfirmed" @click="deleteEvent(event.slug)"> Delete account </Button>
+                                            </DialogFooter>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
                             </TableCell>
                         </TableRow>
                     </TableBody>
@@ -130,6 +196,7 @@ const breadCrumbs: BreadcrumbItem[] = [
                 </Pagination>
             </div>
         </div>
+
     </AppLayout>
 </template>
 

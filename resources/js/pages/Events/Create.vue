@@ -48,7 +48,6 @@ const handleImageUpload = (e: Event) => {
 };
 
 const addEvent = () => {
-    console.log(eventForm)
     eventForm.post(route('events.store'), {
         forceFormData: true,
         onSuccess: () => {
@@ -61,7 +60,6 @@ const addEvent = () => {
 <template>
     <Head title="Create an event" />
     <AppLayout :breadcrumbs="breadCrumbs">
-        {{eventForm.errors}}
         <Card class="max-w-4xl min-w-xl mx-auto mt-5">
             <CardHeader>
                 <CardTitle>Create an Event</CardTitle>

@@ -6,7 +6,6 @@ import { Event } from '@/types/event';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import InputError from '@/components/InputError.vue';
 import { ref } from 'vue';
@@ -26,44 +25,38 @@ const breadCrumbs: BreadcrumbItem[] = [
     }
 ];
 
-const selectedDate = ref<Date | undefined>(props.event.date ? new Date(props.event.date) : new Date());
 const imageFile = ref<File | null>(null);
 
 const eventForm = useForm({
-    title: props.event.title,
-    description: props.event.description,
-    date: props.event.date,
-    slug: props.event.slug,
-    capacity: props.event.capacity,
+    title: props.event.title ?? "",
+    description: props.event.description ?? "",
+    date: props.event.date ?? "",
+    capacity: props.event.capacity ?? "",
     price: props.event.price || 0,
-    city: props.event.city,
-    address: props.event.address,
-    country: props.event.country,
+    city: props.event.city ?? "",
+    address: props.event.address ?? "",
+    country: props.event.country ?? "",
     zipcode: props.event.zipcode || '',
-    attendees: props.event.attendees || '',
     image: null as File | null,
-    _method: 'PUT'
+    _method: 'patch'
 });
+
+const imagePreviewUrl = ref<string | null>(null)
 
 const handleImageUpload = (e: Event) => {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-        imageFile.value = target.files[0];
-        eventForm.image = target.files[0];
+        const file = target.files[0]
+        imageFile.value = file;
+        imagePreviewUrl.value = URL.createObjectURL(file)
+        eventForm.image = file
     }
 };
 
-const updateDate = (date: Date) => {
-    selectedDate.value = date;
-    eventForm.date = date.toISOString().split('T')[0];
-};
 
 const updateEvent = () => {
-    eventForm.post(route('events.update', { id: props.event.id }), {
+    eventForm.post(route("events.update", { event: props.event.id }), {
         forceFormData: true,
-        onSuccess: () => {
-            // Redirect or show success message
-        },
     });
 };
 </script>
@@ -72,16 +65,20 @@ const updateEvent = () => {
     <Head title="Edit Event" />
 
     <AppLayout :breadcrumbs="breadCrumbs">
-        <Card class="max-w-4xl mx-auto">
+        <Card class="max-w-4xl min-w-xl mx-auto mt-5">
             <CardHeader>
-                <CardTitle>Edit Event</CardTitle>
-                <CardDescription>Update your event details</CardDescription>
+                <CardTitle>Edit an Event</CardTitle>
+                <CardDescription>Edit your event details...</CardDescription>
             </CardHeader>
             <CardContent>
-                <form @submit.prevent="updateEvent" class="space-y-6 mt-4">
+                <div class="mb-3">
+                    <Label class="mb-2">Current event image</Label>
+                    <img :src="event.imageUrl" alt="" class="w-full h-32 object-cover">
+                </div>
+                <form @submit.prevent="updateEvent" id="editEvent" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Title -->
-                        <div class="grid gap-2 flex flex-col">
+                        <div class="gap-2 flex flex-col md:col-span-2">
                             <Label for="title">Title</Label>
                             <Input
                                 id="title"
@@ -95,25 +92,18 @@ const updateEvent = () => {
                             <InputError :message="eventForm.errors.title" />
                         </div>
 
-                        <!-- Slug -->
-                        <div class="grid gap-2 flex flex-col">
-                            <Label for="slug">Slug</Label>
+                        <!-- Date -->
+                        <div class=" gap-2 flex flex-col md:col-span-2">
+                            <Label for="title">Date, with starting hours</Label>
                             <Input
-                                id="slug"
+                                id="date"
                                 type="text"
                                 required
-                                v-model="eventForm.slug"
-                                placeholder="event-slug"
+                                autofocus
+                                v-model="eventForm.date"
+                                placeholder="Event date e.g: 2025-05-05 17:00"
                                 class="flex-grow"
                             />
-                            <p class="text-sm text-muted-foreground">URL-friendly name for your event</p>
-                            <InputError :message="eventForm.errors.slug" />
-                        </div>
-
-                        <!-- Date -->
-                        <div class="grid gap-2 flex flex-col">
-                            <Label for="date">Date</Label>
-                            <Calendar v-model="selectedDate" @update:modelValue="updateDate" />
                             <InputError :message="eventForm.errors.date" />
                         </div>
 
@@ -212,28 +202,23 @@ const updateEvent = () => {
                         <!-- Image Upload -->
                         <div class="grid gap-2 md:col-span-2">
                             <Label for="image">Event Image</Label>
-                            <div v-if="event.imageUrl" class="mb-2">
-                                <p class="text-sm text-muted-foreground">Current image:</p>
-                                <img :src="event.imageUrl" alt="Event image" class="h-32 object-cover rounded-md" />
-                            </div>
                             <Input
                                 id="image"
                                 type="file"
                                 accept="image/*"
                                 @change="handleImageUpload"
                             />
-                            <p class="text-sm text-muted-foreground">Upload a new image to replace the current one</p>
-                            <div v-if="imageFile" class="mt-2">
-                                <p class="text-sm text-muted-foreground">New selected image:</p>
-                                <img :src="URL.createObjectURL(imageFile)" alt="Selected image" class="h-32 object-cover rounded-md mt-1" />
+                            <p class="text-sm text-muted-foreground">Upload an image for your event</p>
+                            <div v-if="imagePreviewUrl" class="mt-2">
+                                <p class="text-sm text-muted-foreground">Selected image:</p>
+                                <img :src="imagePreviewUrl" alt="Selected image" class="h-32 object-cover rounded-md mt-1" />
                             </div>
                             <InputError :message="eventForm.errors.image" />
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-4">
-                        <Button type="button" variant="outline" :href="route('events.index')">Cancel</Button>
-                        <Button type="submit">Update Event</Button>
+                    <div class="flex justify-end">
+                        <Button type="submit" form="editEvent" class="w-full md:w-auto">Edit Event</Button>
                     </div>
                 </form>
             </CardContent>

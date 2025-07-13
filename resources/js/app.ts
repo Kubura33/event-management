@@ -6,6 +6,8 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import { Toaster } from '@/components/ui/sonner'
+import 'vue-sonner/style.css'
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

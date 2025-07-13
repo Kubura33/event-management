@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -42,6 +44,7 @@ class Event extends Model
         'country',
         'zipcode',
     ];
+    protected $appends = ['imageUrl'];
 
     protected static function booted()
     {
@@ -63,4 +66,15 @@ class Event extends Model
 
         return $slug;
     }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? asset(Storage::url($this->image)) : null;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
 }
