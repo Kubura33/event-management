@@ -31,22 +31,21 @@ const showModal = ref<boolean>(false);
 </script>
 
 <template>
-    <Card class="w-full overflow-hidden">
+    <Card class="w-full h-full flex flex-col justify-between">
+        <!-- Image -->
         <div class="relative">
             <img
-                :src="
-                    event.imageUrl ||
-                    'https://imgs.search.brave.com/RT802e_LwBpcWwI7b6Ns61xhw4S_aVL7a55bM-tjgoM/rs:fit:0:180:1:0/g:ce/aHR0cHM6Ly9iLnRo/dW1icy5yZWRkaXRt/ZWRpYS5jb20vd2FR/dVVjOXo0Y25HTk5a/UGR4YzlPQTB1UWpm/aGdBcGtzRWxxaDg2/aFN1RS5qcGc'
-                "
+                :src="event.imageUrl || '/ventry-logo.png'"
                 alt="Event image"
-                class="h-48 w-full object-cover"
+                class="h-64 w-full object-cover"
             />
             <div class="absolute top-2 right-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
                 {{ formattedDate }}
             </div>
         </div>
 
-        <CardHeader>
+        <!-- Header -->
+        <CardHeader class="min-h-[50px]">
             <CardTitle>{{ event.title }}</CardTitle>
             <CardDescription>
                 <div class="flex items-center gap-1">
@@ -62,38 +61,50 @@ const showModal = ref<boolean>(false);
             </CardDescription>
         </CardHeader>
 
-        <CardContent>
-            <p class="mb-4 text-sm">{{ truncateBySentence(event.description) }}</p>
+        <!-- Content (flex-grow ensures it fills) -->
+        <CardContent class="flex flex-col flex-grow justify-between min-h-[200px]">
+            <!-- Truncated Description -->
+            <p class="text-sm text-gray-700 mb-4 line-clamp-3">
+                {{ truncateBySentence(event.description) }}
+            </p>
 
-            <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="text-sm space-y-4">
+                <!-- Location -->
                 <div>
                     <p class="font-medium">Location</p>
                     <p class="text-muted-foreground">{{ event.address }}</p>
                     <p v-if="event.zipcode" class="text-muted-foreground">ZIP: {{ event.zipcode }}</p>
                 </div>
 
+                <!-- Attendance -->
                 <div>
-                    <p class="font-medium">Attendance</p>
-                    <div class="flex items-center gap-2">
-                        <div class="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                            <div
-                                class="h-2.5 rounded-full bg-blue-600"
-                                :style="{ width: `${(parseInt(event.attendees || '0') / event.capacity) * 100}%` }"
-                            ></div>
-                        </div>
-                        <span class="text-xs">{{ event.attendees || 0 }}/{{ event.capacity }}</span>
+                    <p class="font-medium mb-1">Attendance</p>
+                    <div class="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                        <div
+                            class="h-2.5 rounded-full bg-blue-600 transition-all duration-300"
+                            :style="{ width: `${event.capacity > 0 ? ((parseInt(event.attendees || '0') / event.capacity) * 100) : 0}%` }"
+                        ></div>
                     </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        {{ event.attendees || 0 }}/{{ event.capacity }}
+                    </p>
+                </div>
 
-                    <p v-if="event.price" class="mt-2"><span class="font-medium">Price:</span> ${{ event.price }}</p>
+                <!-- Price -->
+                <div v-if="event.price">
+                    <p class="font-medium">Price</p>
+                    <p>${{ event.price }}</p>
                 </div>
             </div>
         </CardContent>
 
-        <CardFooter class="flex justify-end gap-2">
-            <Button variant="outline" :as="Link" :href="route('event', { event: event.slug })"> See more</Button>
-            <Button @click="showModal = true"> Sign up</Button>
+        <!-- Footer -->
+        <CardFooter class="mt-auto flex justify-end gap-2">
+            <Button variant="outline" :as="Link" :href="route('event', { event: event.slug })">See more</Button>
+            <Button @click="showModal = true">Sign up</Button>
         </CardFooter>
     </Card>
+
 
     <EventSignUpModal @close="showModal = false" :show="showModal" :event-id="event.slug" :event-title="event.title" />
 </template>

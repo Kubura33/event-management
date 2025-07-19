@@ -7,6 +7,7 @@ use Inertia\Inertia;
 
 Route::get('/', [EventMainController::class, 'events'])->name('home');
 Route::get('/event/{event}', [EventMainController::class, 'event'])->name('event');
+Route::get('/browse-events', [EventMainController::class, 'browseEvents'])->name('browse-events');
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
