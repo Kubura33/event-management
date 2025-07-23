@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +19,7 @@ class EventFactory extends Factory
     {
         return [
             'title' => $this->faker->title(),
+            'category_id' => Category::all()->random()->id,
             'slug' => $this->faker->slug(),
             'description' => $this->faker->paragraph(),
             'date' => $this->faker->date(),

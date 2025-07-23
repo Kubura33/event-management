@@ -11,6 +11,7 @@ const props = defineProps<{
         <!-- Image -->
         <div class="rounded-lg overflow-hidden shadow mb-8">
             <img
+                v-if="event.imageUrl"
                 :src="event.imageUrl"
                 :alt="event.title"
                 class="w-full h-auto object-cover"

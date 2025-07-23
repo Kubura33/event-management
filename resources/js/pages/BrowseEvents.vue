@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import FilterEvents from '@/components/FilterEvents.vue';
-import { Event } from '@/types/event';
+import { Event, Category, EventFilters } from '@/types/event';
 import { usePage } from '@inertiajs/vue3';
 import EventCardV2 from '@/components/EventCardV2.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import EventCardList from '@/components/EventCardList.vue';
+import CustomPagination from '@/components/CustomPagination.vue';
 
 type View = 'grid' | 'list';
-const props = defineProps<{ events: Event[] }>();
+const props = defineProps<{categories: Category[], filters: EventFilters, locations: string [] }>();
 const page = usePage();
-const events: Event[] = page.props.events.data;
-const pagination = page.props.events;
-
+const events = computed<Event[]>(() => page.props.events.data)
+const pagination = computed(() => page.props.events)
 const chosenView = ref<View>('grid');
 </script>
 
@@ -26,7 +26,7 @@ const chosenView = ref<View>('grid');
         </div>
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div class="lg:grid lg:grid-cols-12 lg:gap-8">
-                <FilterEvents />
+                <FilterEvents :categories="categories" :filters="filters" :locations="locations" />
                 <div class="mt-6 lg:col-span-9 lg:mt-0">
                     <div class="mb-6 flex flex-col items-start justify-between space-y-3 sm:flex-row sm:items-center sm:space-y-0">
                         <div class="flex items-center space-x-2">
@@ -74,7 +74,7 @@ const chosenView = ref<View>('grid');
 
                     <!-- Results Count -->
                     <div class="mb-4">
-                        <p class="text-sm text-gray-500">Showing <span class="font-medium">24</span> events</p>
+                        <p class="text-sm text-gray-500">Showing <span class="font-medium">{{ events.length }}</span> events</p>
                     </div>
                     <div id="grid-view" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" v-if="chosenView === 'grid'">
                         <EventCardV2 :event="event" v-for="event in events" :key="event.id" />
@@ -84,6 +84,14 @@ const chosenView = ref<View>('grid');
                     </div>
                 </div>
             </div>
+            <CustomPagination :links="pagination.links" :meta="{
+                current_page: pagination.current_page,
+                from: pagination.from,
+                to: pagination.to,
+                total: pagination.total
+            }"
+            :filters="filters"
+            />
         </div>
     </GuestLayout>
 </template>

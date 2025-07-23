@@ -2,11 +2,13 @@
 import { useForm } from '@inertiajs/vue3';
 import { watch, defineProps, defineEmits } from 'vue';
 import { Input } from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
 
 interface Props {
     show: boolean;
-    eventId: string;
+    eventId: number;
     eventTitle: string;
+    eventSlug: string;
 }
 
 const props = defineProps<Props>();
@@ -35,7 +37,7 @@ watch(
 );
 
 const submit = () => {
-    form.post('/event-registrations', {
+    form.post(route('event.registration', {event: props.eventSlug}), {
         onSuccess: () => {
             emit('submitted');
             emit('close');
@@ -63,7 +65,7 @@ const submit = () => {
                         <Input v-model="form.email" type="email" class="input" required placeholder="you@example.com" />
                     </div>
 
-                    <div class="mb-4">
+                    <div >
                         <Label class="block text-sm font-medium">Message (optional)</Label>
                         <textarea
                             id="message"
@@ -74,7 +76,8 @@ const submit = () => {
                             placeholder="Say something..."
                         ></textarea>
                     </div>
-
+                    <p class="text-xs text-blue-500 mb-1">After the registration you will receive an email for successful registration and a link if you wish to cancel</p>
+                    <p class="text-xs text-red-500 mb-4">Cash for the event will be taken once you come to the event</p>
                     <button :disabled="form.processing" class="w-full rounded bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">
                         {{ form.processing ? 'Submitting...' : 'Submit Registration' }}
                     </button>

@@ -3,25 +3,16 @@ import EventSignUpModal from '@/components/EventSignUpModal.vue';
 import { Event } from '@/types/event';
 import { Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useFormattedDate } from '@/composables/useFormattedDate';
+import { truncateBySentence } from '@/composables/useTruncatedSentence';
 
 const props = defineProps<{ event: Event }>();
 
 // Format date to a more readable format
-const formattedDate = computed(() => {
-    return new Date(props.event.date).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-});
+const {formattedDate} = useFormattedDate(props.event.date)
 
 //Truncate description
-const truncateBySentence = (text: string, maxSentences = 1.5): string => {
-    const parts = text.split(/(?<=[.?!])\s+/); // split by sentence endings
-    if (parts.length <= maxSentences) return text;
-    return parts.slice(0, Math.ceil(maxSentences)).join(' ') + '...';
-};
+const shortDesc = truncateBySentence(props.event.description, 2)
 
 //Show sign up modal
 
@@ -49,7 +40,7 @@ const showModal = ref<boolean>(false);
                 <span>{{ formattedDate }}</span>
             </div>
             <h3 class="mb-2 text-xl font-semibold text-gray-900">{{ event.title }}</h3>
-            <p class="mb-4 line-clamp-2 text-gray-600">{{ truncateBySentence(event.description) }}</p>
+            <p class="mb-4 line-clamp-2 text-gray-600">{{ shortDesc }}</p>
             <div class="mb-3 flex items-center text-sm text-gray-500">
                 <svg class="mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -75,7 +66,7 @@ const showModal = ref<boolean>(false);
             </div>
         </div>
     </div>
-    <EventSignUpModal @close="showModal = false" :show="showModal" :event-id="event.slug" :event-title="event.title" />
+    <EventSignUpModal @close="showModal = false" :show="showModal" :event-id="event.slug" :event-title="event.title" :event-slug="event.slug" />
 </template>
 
 <style scoped>

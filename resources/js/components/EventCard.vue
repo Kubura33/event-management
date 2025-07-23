@@ -106,7 +106,7 @@ const showModal = ref<boolean>(false);
     </Card>
 
 
-    <EventSignUpModal @close="showModal = false" :show="showModal" :event-id="event.slug" :event-title="event.title" />
+    <EventSignUpModal @close="showModal = false" :show="showModal" :event-id="event.slug" :event-title="event.title" :event-slug="event.slug" />
 </template>
 
 <style scoped></style>

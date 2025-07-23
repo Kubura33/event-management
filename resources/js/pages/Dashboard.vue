@@ -77,7 +77,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </div>
                 </div>
 
-                <!-- Total Attendees Card -->
+                <!-- Total Attendee Card -->
                 <div class="flex flex-col justify-between p-6 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border bg-white dark:bg-gray-800">
                     <div class="text-sm text-gray-500 dark:text-gray-400">Total Attendees</div>
                     <div class="mt-2 flex items-baseline">
