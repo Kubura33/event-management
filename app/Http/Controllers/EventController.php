@@ -15,8 +15,9 @@ class EventController extends Controller
 {
     public function index(): Response
     {
+        $user = auth()->user();
         return Inertia::render('Events/Index', [
-            'events' => Event::paginate(15),
+            'events' => $user->events()->paginate(15),
         ]);
     }
 

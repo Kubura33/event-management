@@ -21,7 +21,7 @@ const breadCrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Edit Event',
-        href: route('events.edit', { id: props.event.id })
+        href: route('events.edit', { event: props.event.slug })
     }
 ];
 
@@ -55,7 +55,7 @@ const handleImageUpload = (e: Event) => {
 
 
 const updateEvent = () => {
-    eventForm.post(route("events.update", { event: props.event.id }), {
+    eventForm.post(route("events.update", { event: props.event.slug }), {
         forceFormData: true,
     });
 };

@@ -48,7 +48,7 @@ class Event extends Model
         'zipcode',
     ];
 
-    protected $appends = ['imageUrl'];
+    protected $appends = ['imageUrl', 'attendees'];
 
     protected static function booted()
     {
@@ -73,9 +73,17 @@ class Event extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset(Storage::url($this->image)) : null;
+        $value = $this->image;
+        if(!Str::startsWith($value, 'http')) {
+            $value = asset(Storage::url($this->image));
+        }
+        return $value;
     }
 
+    public function getAttendeesAttribute(): int
+    {
+        return $this->attendees()->count();
+    }
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id');
@@ -84,6 +92,11 @@ class Event extends Model
     public function attendees(): HasMany
     {
         return $this->hasMany(Attendee::class, 'event_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
     public function getRouteKeyName(): string
     {

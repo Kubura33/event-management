@@ -66,7 +66,7 @@ const showModal = ref<boolean>(false);
             </div>
         </div>
     </div>
-    <EventSignUpModal @close="showModal = false" :show="showModal" :event-id="event.slug" :event-title="event.title" :event-slug="event.slug" />
+    <EventSignUpModal @close="showModal = false" :show="showModal" :event-id="event.id" :event-title="event.title" :event-slug="event.slug" />
 </template>
 
 <style scoped>

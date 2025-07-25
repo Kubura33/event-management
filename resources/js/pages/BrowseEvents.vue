@@ -2,11 +2,12 @@
 import GuestLayout from '@/layouts/GuestLayout.vue';
 import FilterEvents from '@/components/FilterEvents.vue';
 import { Event, Category, EventFilters } from '@/types/event';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import EventCardV2 from '@/components/EventCardV2.vue';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import EventCardList from '@/components/EventCardList.vue';
 import CustomPagination from '@/components/CustomPagination.vue';
+import { useEchoPublic } from '@laravel/echo-vue';
 
 type View = 'grid' | 'list';
 const props = defineProps<{categories: Category[], filters: EventFilters, locations: string [] }>();
@@ -14,6 +15,15 @@ const page = usePage();
 const events = computed<Event[]>(() => page.props.events.data)
 const pagination = computed(() => page.props.events)
 const chosenView = ref<View>('grid');
+
+useEchoPublic(
+    "events",
+    "EventCapacityUpdated",
+    (e) => {
+        router.reload({only: ['events']})
+    }
+)
+
 </script>
 
 <template>

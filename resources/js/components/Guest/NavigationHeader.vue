@@ -36,27 +36,6 @@ import { Link } from '@inertiajs/vue3';
                         >
                             Browse Events
                         </Link>
-                        <a
-                            href="#"
-                            :class="[
-                                route().current('home')
-                                    ? 'border-b-2 border-indigo-500 text-gray-900'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                                'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2',
-                            ]"
-                        >
-                            Create Event
-                        </a>
-                        <a
-                            href="#"
-                            :class="[
-                                route().current('home')
-                                    ? 'border-b-2 border-indigo-500 text-gray-900'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                                'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2',
-                            ]"                        >
-                            My Events
-                        </a>
                     </div>
                 </div>
                 <div class="flex items-center">

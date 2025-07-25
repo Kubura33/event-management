@@ -7,13 +7,19 @@ const props = defineProps<{
 </script>
 
 <template>
-    <div class="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8 font-inter">
         <!-- Image -->
-        <div class="rounded-lg overflow-hidden shadow mb-8">
+        <div class="rounded-lg overflow-hidden shadow mb-8 max-h-[650px]">
             <img
                 v-if="event.imageUrl"
                 :src="event.imageUrl"
                 :alt="event.title"
+                class="w-full h-auto object-cover"
+            />
+            <img
+                v-else
+                src="/event-image-placeholder.png"
+                alt="Default event image"
                 class="w-full h-auto object-cover"
             />
         </div>

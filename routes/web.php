@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventMainController;
 use App\Http\Controllers\EventRegistrationController;
@@ -14,9 +15,7 @@ Route::get('/r/{attendee}/cancel', [EventRegistrationController::class, 'cancel'
     ->name('registrations.cancel')
     ->middleware('signed');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', DashboardController::class)->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('events', EventController::class)->only(['index', 'create', 'edit', 'show', 'store',  'update', 'destroy']);

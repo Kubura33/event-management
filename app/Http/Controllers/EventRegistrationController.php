@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\EventCapacityUpdated;
 use App\Events\EventRegistrationCreated;
 use App\Models\Attendee;
 use App\Models\Event;
+use App\Services\EventActivityLogService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -31,6 +33,10 @@ class EventRegistrationController extends Controller
             ['attendee' => $registration->id]
         );
         event(new EventRegistrationCreated($registration, $url));
+        broadcast(new EventCapacityUpdated(
+            event: $event
+        ))->toOthers();
+        app(EventActivityLogService::class)->refresh();
 
     }
 
@@ -44,7 +50,7 @@ class EventRegistrationController extends Controller
         abort_if($attendee->canceled_at, 410, 'Already canceled.');
 
         $attendee->update(['canceled_at' => now()]);
-
+        app(EventActivityLogService::class)->refresh();
         return redirect()->route('events.show', $event->slug)->with('success', 'Your spot was canceled.');
     }
 
