@@ -104,7 +104,7 @@ const activeStepComponent = computed(() => {
 <template>
     <Head title="Create an event" />
     <AppLayout :breadcrumbs="breadCrumbs">
-        <div class="max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <div class="max-w-5xl lg:min-w-2xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
             <FormStepIndicator :current-step="activeStep" />
             <div class="mb-8 w-full rounded-lg bg-white p-6 shadow-sm">
                 <form id="event-form">

@@ -2,28 +2,41 @@
 import { Category } from '@/types/event';
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import InputError from '@/components/InputError.vue';
 
-defineEmits(['next']);
-const props = defineProps<{ categories: Category[] }>();
+const emits = defineEmits(['next']);
+defineProps<{ categories: Category[] }>();
 
 const overviewForm = useForm<{
     title: string;
     category_id: number | null;
     start_date: string;
+    capacity: number;
+    price: number;
     end_date: string;
-    location: string;
+    country: string;
+    city: string;
+    address: string;
+    zipcode: string;
     description: string;
     image: File | null;
     tags: string[];
+    step: string;
 }>({
     title: '',
     category_id: null,
     start_date: '',
+    price: 0,
+    capacity: 0,
     end_date: '',
-    location: '',
+    country: '',
+    city: '',
+    address: '',
+    zipcode: '',
     description: '',
     image: null,
     tags: [],
+    step: "overview"
 });
 
 //Tags manipulation
@@ -50,6 +63,12 @@ const handleKey = (e: KeyboardEvent) => {
 const removeTag = (tag: string) => {
     tags.value = tags.value.filter((t) => t !== tag);
 };
+
+const submitStep = () => {
+    overviewForm.post(route('events.store'),{
+        onSuccess: () => emits('next')
+    })
+}
 </script>
 
 <template>
@@ -68,8 +87,8 @@ const removeTag = (tag: string) => {
                     required
                     class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                 />
+                <InputError :message="overviewForm.errors.title" />
             </div>
-
             <!-- Event Category -->
             <div>
                 <label for="event-category" class="mb-1 block text-sm font-medium text-gray-700">Category <span class="text-red-500">*</span></label>
@@ -81,8 +100,9 @@ const removeTag = (tag: string) => {
                     class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                 >
                     <option value="" disabled selected>Select a category</option>
-                    <option value="technology" v-for="category in categories" :key="category.id">{{ category.name }}</option>
+                    <option :value="category.id" v-for="category in categories" :key="category.id">{{ category.name }}</option>
                 </select>
+                <InputError :message="overviewForm.errors.category_id" />
             </div>
 
             <!-- Event Dates -->
@@ -99,6 +119,7 @@ const removeTag = (tag: string) => {
                         required
                         class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                     />
+                    <InputError :message="overviewForm.errors.start_date" />
                 </div>
                 <div>
                     <label for="end-date" class="mb-1 block text-sm font-medium text-gray-700">End Date <span class="text-red-500">*</span></label>
@@ -110,22 +131,94 @@ const removeTag = (tag: string) => {
                         required
                         class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                     />
+                    <InputError :message="overviewForm.errors.end_date" />
+
+                </div>
+            </div>
+
+            <!-- Event capacity and price -->
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <label for="price" class="mb-1 block text-sm font-medium text-gray-700"
+                    >Price <span class="text-red-500">*</span></label
+                    >
+                    <input
+                        v-model="overviewForm.price"
+                        type="number"
+                        id="price"
+                        name="price"
+                        required
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <InputError :message="overviewForm.errors.price" />
+
+                </div>
+                <div>
+                    <label for="capacity" class="mb-1 block text-sm font-medium text-gray-700">Capacity <span class="text-red-500">*</span></label>
+                    <input
+                        v-model="overviewForm.capacity"
+                        type="number"
+                        id="capacity"
+                        name="capacity"
+                        required
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <InputError :message="overviewForm.errors.capacity" />
                 </div>
             </div>
 
             <!-- Event Location -->
-            <div>
-                <label for="event-location" class="mb-1 block text-sm font-medium text-gray-700">Location <span class="text-red-500">*</span></label>
-                <input
-                    v-model="overviewForm.location"
-                    type="text"
-                    id="event-location"
-                    name="event-location"
-                    required
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
-                />
-            </div>
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div>
+                    <label for="event-country" class="mb-1 block text-sm font-medium text-gray-700">Country <span class="text-red-500">*</span></label>
+                    <input
+                        v-model="overviewForm.country"
+                        type="text"
+                        id="event-country"
+                        name="event-country"
+                        required
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <InputError :message="overviewForm.errors.country" />
+                </div>
+                <div>
+                    <label for="event-city" class="mb-1 block text-sm font-medium text-gray-700">City <span class="text-red-500">*</span></label>
+                    <input
+                        v-model="overviewForm.city"
+                        type="text"
+                        id="event-city"
+                        name="event-city"
+                        required
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <InputError :message="overviewForm.errors.city" />
+                </div>
+                <div>
+                    <label for="event-address" class="mb-1 block text-sm font-medium text-gray-700">Address <span class="text-red-500">*</span></label>
+                    <input
+                        v-model="overviewForm.address"
+                        type="text"
+                        id="event-address"
+                        name="event-address"
+                        required
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <InputError :message="overviewForm.errors.address" />
+                </div>
+                <div>
+                    <label for="event-zipcode" class="mb-1 block text-sm font-medium text-gray-700">ZIP <span class="text-red-500">*</span></label>
+                    <input
+                        v-model="overviewForm.zipcode"
+                        type="text"
+                        id="event-zipcode"
+                        name="event-zipcode"
+                        required
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <InputError :message="overviewForm.errors.zipcode" />
+                </div>
 
+            </div>
             <!-- Event Description -->
             <div>
                 <label for="event-description" class="mb-1 block text-sm font-medium text-gray-700"
@@ -139,6 +232,7 @@ const removeTag = (tag: string) => {
                     required
                     class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                 ></textarea>
+                <InputError :message="overviewForm.errors.description" />
                 <p class="mt-1 text-sm text-gray-500">Provide a detailed description of your event. What can attendees expect?</p>
             </div>
 
@@ -179,6 +273,7 @@ const removeTag = (tag: string) => {
                             </svg>
                         </div>
                     </div>
+                    <InputError :message="overviewForm.errors.image" />
                 </div>
             </div>
             <!-- Event Tags -->
@@ -203,12 +298,13 @@ const removeTag = (tag: string) => {
                     placeholder="Add a tag and press enter"
                 />
                 <p class="mt-1 text-sm text-gray-500">Press enter or comma to add tag (up to 5)</p>
+                <InputError :message="overviewForm.errors.tags" />
             </div>
         </div>
 
         <div class="mt-8 flex justify-end">
             <button
-                @click="$emit('next')"
+                @click.prevent="submitStep"
                 type="button"
                 id="next-to-step-2"
                 class="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"

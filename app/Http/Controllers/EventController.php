@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\EventRequest;
 use App\Models\Category;
 use App\Models\Event;
+use App\Services\EventService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -48,16 +49,32 @@ class EventController extends Controller
 
     public function store(EventRequest $request): RedirectResponse
     {
-        $event = auth()->user()->events()->create($request->safe()->except(['image']));
+        $user = auth()->user();
+        $step = $request->get('step');
+        $final = $request->boolean('final', false); // assuming you're passing this flag
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('events', 'public');
-            $event->image = $path;
-            $event->save();
+        // If the image is uploaded, handle it before anything else
+//        $overview = $request->safe()->except(['image']);
+//
+//        if ($request->hasFile('image')) {
+//            $path = $request->file('image')->store('events', 'public');
+//            $overview['image_path'] = $path;
+//        }
+
+        // Initialize the service
+        $service = new EventService(
+            user: $user,
+        );
+
+        // Inject the step data
+        $service->step($step, $request->validated())->finalize($final);
+
+        // Either save to PendingEvent or finalize to full Event
+        if ($final) {
+            return redirect()->route('events.index');
         }
 
-        return redirect()->route('events.index');
-
+        return redirect()->back();
     }
 
     public function update(EventRequest $request, Event $event): RedirectResponse

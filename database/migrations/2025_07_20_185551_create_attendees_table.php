@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('attendees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained('events');
-            $table->string('email')->unique();
+            $table->string('email');
+            $table->string('message')->nullable();
             $table->string('name');
             $table->time('cancelled_at')->nullable();
             $table->timestamps();

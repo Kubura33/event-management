@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string("linkedin");
             $table->string("website");
             $table->string("twitter");
-            $table->string("image");
+            $table->string("photo");
             $table->timestamps();
         });
     }

@@ -1,27 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 defineEmits(['next', 'back']);
 
 type ScheduleItem = {
     title: string;
     description: string;
-    date: string; // use string for date inputs
+    date: string;
     startTime: string;
     endTime: string;
 };
 
-const scheduleItems = ref<ScheduleItem[]>([
-    {
-        title: '',
-        description: '',
-        date: '',
-        startTime: '',
-        endTime: '',
-    }
-]);
-
 const addScheduleItem = () => {
-    scheduleItems.value.push({
+    form.schedules.push({
         title: '',
         description: '',
         date: '',
@@ -30,8 +21,22 @@ const addScheduleItem = () => {
     });
 };
 
+const form = useForm<{
+    schedules: ScheduleItem[];
+    step: string;
+}>({
+    schedules: [{
+        title: '',
+        description: '',
+        date: '',
+        startTime: '',
+        endTime: '',
+    }],
+    step: "schedules"
+})
+
 const removeScheduleItem = (index: number) => {
-    scheduleItems.value.splice(index, 1);
+    form.schedules.splice(index, 1);
 };
 </script>
 <template>
@@ -40,7 +45,7 @@ const removeScheduleItem = (index: number) => {
 
         <div class="space-y-8">
             <div
-                v-for="(item, index) in scheduleItems"
+                v-for="(item, index) in form.schedules"
                 :key="index"
                 class="border border-gray-200 rounded-lg p-4"
             >
@@ -92,7 +97,7 @@ const removeScheduleItem = (index: number) => {
 
                     <div class="md:col-span-1 flex items-end">
                         <button
-                            v-if="scheduleItems.length > 1"
+                            v-if="form.schedules.length > 1"
                             type="button"
                             @click="removeScheduleItem(index)"
                             class="w-full bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-md text-sm font-medium"

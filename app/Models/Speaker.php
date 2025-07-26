@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $bio
  * @property string $linkedin
  * @property string $twitter
- * @propery string $website
- * @property string $image
+ * @property string $website
+ * @property string $photo
  */
 class Speaker extends Model
 {
@@ -25,7 +25,7 @@ class Speaker extends Model
         'linkedin',
         'twitter',
         'website',
-        'image',
+        'photo',
     ];
 
     public function event(): BelongsTo

@@ -19,7 +19,8 @@ use Illuminate\Support\Str;
  * @property int $user_id
  * @property int $category_id
  * @property string $title
- * @property string $date
+ * @property string $start_date
+ * @property string $end_date
  * @property int $capacity
  * @property string $slug
  * @property string $image
@@ -41,7 +42,8 @@ class Event extends Model
         'category_id',
         'user_id',
         'capacity',
-        'date',
+        'start_date',
+        'end_date',
         'slug',
         'image',
         'price',
