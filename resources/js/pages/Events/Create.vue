@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import FAQStep from '@/components/EventForm/FAQStep.vue';
+import FormStepIndicator from '@/components/EventForm/FormStepIndicator.vue';
+import OverviewStep from '@/components/EventForm/OverviewStep.vue';
+import ScheduleStep from '@/components/EventForm/ScheduleStep.vue';
+import SpeakersStep from '@/components/EventForm/SpeakersStep.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { BreadcrumbItem } from '@/types';
-import { Event } from '@/types/event';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import InputError from '@/components/InputError.vue';
-import { ref } from 'vue';
+import { Category } from '@/types/event';
+import { Head, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 const breadCrumbs: BreadcrumbItem[] = [
     {
@@ -17,13 +17,35 @@ const breadCrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Create an event',
-        href: route('events.create')
-    }
+        href: route('events.create'),
+    },
 ];
 
-const imageFile = ref<File | null>(null);
+const props = defineProps<{ categories: Category[] }>();
 
-const eventForm = useForm({
+const stepProps = {
+    1: { categories: props.categories },         // For OverviewStep.vue
+    2: { }, // For ScheduleStep.vue
+    3: {  },           // For SpeakersStep.vue
+    4: {  },               // For FAQStep.vue
+} as Record<number, Record<string, any>>;
+
+const imageFile = ref<File | null>(null);
+const chosenCategory = ref<Category | null>(null);
+const eventForm = useForm<{
+    category_id: number | null;
+    title: string;
+    description: string;
+    date: string;
+    capacity: number;
+    price: number;
+    city: string;
+    address: string;
+    country: string;
+    zipcode: string;
+    image: File | null;
+}>({
+    category_id: null,
     title: '',
     description: '',
     date: '',
@@ -36,185 +58,82 @@ const eventForm = useForm({
     image: null as File | null,
 });
 
-const imagePreviewUrl = ref<string | null>(null)
+const imagePreviewUrl = ref<string | null>(null);
 const handleImageUpload = (e: Event) => {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-        const file = target.files[0]
+        const file = target.files[0];
         imageFile.value = file;
-        imagePreviewUrl.value = URL.createObjectURL(file)
+        imagePreviewUrl.value = URL.createObjectURL(file);
         eventForm.image = target.files[0];
     }
 };
 
 const addEvent = () => {
+    eventForm.category_id = chosenCategory.value?.id;
     eventForm.post(route('events.store'), {
         forceFormData: true,
-        onSuccess: () => {
-
-        },
+        onSuccess: () => {},
     });
 };
+
+const steps = [
+    { id: 1, name: 'Overview', component: OverviewStep },
+    { id: 2, name: 'Schedule', component: ScheduleStep },
+    { id: 3, name: 'Speakers', component: SpeakersStep },
+    { id: 4, name: 'FAQ', component: FAQStep },
+];
+const activeStep = ref(1)
+
+const goNext = () => {
+    if (activeStep.value < steps.length) {
+        activeStep.value++;
+    }
+};
+
+const goBack = () => {
+    if (activeStep.value > 1) {
+        activeStep.value--;
+    }
+};
+const activeStepComponent = computed(() => {
+    return steps.find((step) => step.id === activeStep.value)?.component || OverviewStep
+})
 </script>
 
 <template>
     <Head title="Create an event" />
     <AppLayout :breadcrumbs="breadCrumbs">
-        <Card class="max-w-4xl min-w-xl mx-auto mt-5">
-            <CardHeader>
-                <CardTitle>Create an Event</CardTitle>
-                <CardDescription>Fill in the details to create a new event</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form @submit.prevent="addEvent" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Title -->
-                        <div class="gap-2 flex flex-col md:col-span-2">
-                            <Label for="title">Title</Label>
-                            <Input
-                                id="title"
-                                type="text"
-                                required
-                                autofocus
-                                v-model="eventForm.title"
-                                placeholder="Event title"
-                                class="flex-grow"
-                            />
-                            <InputError :message="eventForm.errors.title" />
-                        </div>
-
-                        <!-- Date -->
-                        <div class=" gap-2 flex flex-col md:col-span-2">
-                            <Label for="title">Date, with starting hours</Label>
-                            <Input
-                                id="date"
-                                type="text"
-                                required
-                                autofocus
-                                v-model="eventForm.date"
-                                placeholder="Event date e.g: 2025-05-05 17:00"
-                                class="flex-grow"
-                            />
-                            <InputError :message="eventForm.errors.date" />
-                        </div>
-
-                        <!-- Description -->
-                        <div class="grid gap-2 md:col-span-2">
-                            <Label for="description">Description</Label>
-                            <textarea
-                                id="description"
-                                rows="4"
-                                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                required
-                                v-model="eventForm.description"
-                                placeholder="Event description"
-                            ></textarea>
-                            <InputError :message="eventForm.errors.description" />
-                        </div>
-
-                        <!-- Capacity -->
-                        <div class="grid gap-2">
-                            <Label for="capacity">Capacity</Label>
-                            <Input
-                                id="capacity"
-                                type="number"
-                                required
-                                v-model="eventForm.capacity"
-                                placeholder="Maximum number of attendees"
-                            />
-                            <InputError :message="eventForm.errors.capacity" />
-                        </div>
-
-                        <!-- Price -->
-                        <div class="grid gap-2">
-                            <Label for="price">Price</Label>
-                            <Input
-                                id="price"
-                                type="number"
-                                step="0.01"
-                                v-model="eventForm.price"
-                                placeholder="Event price (leave empty for free events)"
-                            />
-                            <InputError :message="eventForm.errors.price" />
-                        </div>
-
-                        <!-- City -->
-                        <div class="grid gap-2">
-                            <Label for="city">City</Label>
-                            <Input
-                                id="city"
-                                type="text"
-                                required
-                                v-model="eventForm.city"
-                                placeholder="City"
-                            />
-                            <InputError :message="eventForm.errors.city" />
-                        </div>
-
-                        <!-- Country -->
-                        <div class="grid gap-2">
-                            <Label for="country">Country</Label>
-                            <Input
-                                id="country"
-                                type="text"
-                                required
-                                v-model="eventForm.country"
-                                placeholder="Country"
-                            />
-                            <InputError :message="eventForm.errors.country" />
-                        </div>
-
-                        <!-- Address -->
-                        <div class="grid gap-2">
-                            <Label for="address">Address</Label>
-                            <Input
-                                id="address"
-                                type="text"
-                                required
-                                v-model="eventForm.address"
-                                placeholder="Street address"
-                            />
-                            <InputError :message="eventForm.errors.address" />
-                        </div>
-
-                        <!-- Zipcode -->
-                        <div class="grid gap-2">
-                            <Label for="zipcode">Zipcode</Label>
-                            <Input
-                                id="zipcode"
-                                type="text"
-                                v-model="eventForm.zipcode"
-                                placeholder="Zipcode/Postal code"
-                            />
-                            <InputError :message="eventForm.errors.zipcode" />
-                        </div>
-
-
-                        <!-- Image Upload -->
-                        <div class="grid gap-2 md:col-span-2">
-                            <Label for="image">Event Image</Label>
-                            <Input
-                                id="image"
-                                type="file"
-                                accept="image/*"
-                                @change="handleImageUpload"
-                            />
-                            <p class="text-sm text-muted-foreground">Upload an image for your event</p>
-                            <div v-if="imagePreviewUrl" class="mt-2">
-                                <p class="text-sm text-muted-foreground">Selected image:</p>
-                                <img :src="imagePreviewUrl" alt="Selected image" class="h-32 object-cover rounded-md mt-1" />
-                            </div>
-                            <InputError :message="eventForm.errors.image" />
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <Button type="submit" class="w-full md:w-auto">Create Event</Button>
-                    </div>
+        <div class="max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+            <FormStepIndicator :current-step="activeStep" />
+            <div class="mb-8 w-full rounded-lg bg-white p-6 shadow-sm">
+                <form id="event-form">
+                    <component v-bind="stepProps[activeStep]" @next="goNext" @back="goBack" :is="activeStepComponent" />
                 </form>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     </AppLayout>
 </template>
 
-<style scoped></style>
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style scoped>
+.form-header {
+    background-color: #4f46e5;
+    background-image: linear-gradient(to right, rgba(79, 70, 229, 0.9), rgba(124, 58, 237, 0.9));
+}
+
+.file-preview img {
+    max-height: 200px;
+    border-radius: 0.375rem;
+}
+
+.remove-image {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 9999px;
+    padding: 0.25rem;
+    cursor: pointer;
+}
+</style>

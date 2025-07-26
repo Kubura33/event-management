@@ -1,10 +1,10 @@
 export interface Event {
-    id: string;
+    id: number;
     title: string;
     date: string;
     slug: string;
     description: string;
-    attendees?: string;
+    attendees?: number;
     capacity: number;
     imageUrl?: string;
     price?: number;
@@ -17,7 +17,7 @@ export interface Event {
 }
 
 export type Category = {
-    id: string;
+    id: number;
     name: string;
     created_at: string;
     updated_at: string;

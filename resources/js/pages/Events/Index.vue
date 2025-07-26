@@ -1,50 +1,32 @@
 <script setup lang="ts">
+import CustomPagination from '@/components/CustomPagination.vue';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { BreadcrumbItem } from '@/types';
-import { Event } from '@/types/event';
-import { Head, Link } from '@inertiajs/vue3';
-import { SquarePen, Eye } from 'lucide-vue-next';
-import { Pagination, PaginationContent, PaginationItem, PaginationPrevious } from '@/components/ui/pagination';
-import { router } from '@inertiajs/vue3';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import {
-    Dialog, DialogClose,
+    Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
-    DialogTitle, DialogTrigger
+    DialogTitle,
+    DialogTrigger,
 } from '@/components/ui/dialog';
-import InputError from '@/components/InputError.vue';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { BreadcrumbItem } from '@/types';
+import { Event, EventFilters } from '@/types/event';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Eye, SquarePen } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
-interface Paginated<T> {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number;
-    to: number;
-}
+const isProcessing = ref<boolean>(false);
 
-interface Props {
-    events: Paginated<Event>;
-}
-
-const isProcessing = ref<boolean>(false)
-function handlePageChange(newPage: number) {
-    router.get(route('events.index'), { page: newPage }, {
-        preserveScroll: true,
-        preserveState: true
-    });
-}
-const props = defineProps<Props>();
+const page = usePage();
+const events = computed<Event[]>(() => page.props.events.data);
+const pagination = computed(() => page.props.events);
 // Handle add event button click
-
 const breadCrumbs: BreadcrumbItem[] = [
     {
         title: 'My Events',
@@ -53,28 +35,31 @@ const breadCrumbs: BreadcrumbItem[] = [
 ];
 
 //Event deletion
-const confirmation = ref<string>('')
+const confirmation = ref<string>('');
 
+const filters = ref<Partial<EventFilters>>({})
 const deleteEvent = (eventSlug: string) => {
-    router.delete(route('events.destroy', {event: eventSlug}),
-        {
-            onSuccess: () => {
-                confirmation.value = ''
-            },
-            onFinish: () => {
-                isProcessing.value = false
-            }
-        })
-}
+    router.delete(route('events.destroy', { event: eventSlug }), {
+        onSuccess: () => {
+            confirmation.value = '';
+        },
+        onFinish: () => {
+            isProcessing.value = false;
+        },
+    });
+};
 
 const isConfirmed = computed(() => {
-    return !(confirmation.value === "permamently delete")
-})
+    return !(confirmation.value === 'permamently delete');
+});
+
+const getImageUrl = (event: Event): string => {
+    return event.imageUrl ?? '/event-image-placeholder.png'
+}
 
 //Show Event
 
 //Edit event
-
 </script>
 
 <template>
@@ -94,33 +79,29 @@ const isConfirmed = computed(() => {
                     Add Event
                 </Button>
             </div>
-            <div>
+            <div v-if="events.length" class="mt-4">
                 <Table>
                     <TableCaption>A list of your events.</TableCaption>
                     <TableHeader>
                         <TableRow>
-                            <TableHead class=""> Title </TableHead>
-                            <TableHead class="w-[200px]"> Image </TableHead>
+                            <TableHead class=""> Title</TableHead>
+                            <TableHead class="w-[200px]"> Image</TableHead>
                             <TableHead class="max-w-sm">Description</TableHead>
                             <TableHead>Date</TableHead>
-                            <TableHead> Price </TableHead>
-                            <TableHead> Attendees/Capacity </TableHead>
-                            <TableHead> Address </TableHead>
+                            <TableHead> Price</TableHead>
+                            <TableHead> Attendees/Capacity</TableHead>
+                            <TableHead> Address</TableHead>
 
-                            <TableHead class="text-center"> Actions </TableHead>
+                            <TableHead class="text-center"> Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow v-for="event in events.data" :key="event.id">
+                        <TableRow v-for="event in events" :key="event.id">
                             <TableCell class="font-medium">
                                 {{ event.title }}
                             </TableCell>
                             <TableCell class="font-medium">
-                                <img
-                                    :src="event.imageUrl"
-                                    alt="Event image"
-                                    class="w-full h-24 object-cover"
-                                />
+                                <img :src="getImageUrl(event)" alt="Event image" class="h-24 w-full object-contain" />
                             </TableCell>
                             <TableCell class="max-w-sm whitespace-normal">
                                 {{ event.description }}
@@ -131,13 +112,15 @@ const isConfirmed = computed(() => {
                             <TableCell>
                                 {{ event.price }}
                             </TableCell>
-                            <TableCell> 0/ {{ event.capacity }} </TableCell>
+                            <TableCell> 0/ {{ event.capacity }}</TableCell>
                             <TableCell class="max-w-xs whitespace-normal">
                                 {{ event.country }}, {{ event.city }}, {{ event.address }}, ZIP: {{ event.zipcode }}
                             </TableCell>
                             <TableCell class="flex flex-col items-center justify-center gap-2">
-                                <Button :as="Link" :href="route('events.show', {event: event.slug})" variant="secondary"> <Eye /> </Button>
-                                <Button :as="Link" :href="route('events.edit', {event: event.slug})" variant="outline">
+                                <Button :as="Link" :href="route('events.show', { event: event.slug })" variant="secondary">
+                                    <Eye />
+                                </Button>
+                                <Button :as="Link" :href="route('events.edit', { event: event.slug })" variant="outline">
                                     <SquarePen />
                                 </Button>
 
@@ -150,8 +133,8 @@ const isConfirmed = computed(() => {
                                             <DialogHeader class="space-y-3">
                                                 <DialogTitle>Are you sure you want to delete your event?</DialogTitle>
                                                 <DialogDescription>
-                                                    Once your event is deleted, all of its resources and data will also be permanently deleted. Please enter "permamently delete"
-                                                    to confirm you would like to permanently delete your event.
+                                                    Once your event is deleted, all of its resources and data will also be permanently deleted. Please
+                                                    enter "permamently delete" to confirm you would like to permanently delete your event.
                                                 </DialogDescription>
                                             </DialogHeader>
 
@@ -163,10 +146,17 @@ const isConfirmed = computed(() => {
 
                                             <DialogFooter class="gap-2">
                                                 <DialogClose as-child>
-                                                    <Button variant="secondary"> Cancel </Button>
+                                                    <Button variant="secondary"> Cancel</Button>
                                                 </DialogClose>
 
-                                                <Button type="submit" variant="destructive" :disabled="isProcessing || isConfirmed" @click="deleteEvent(event.slug)"> Delete account </Button>
+                                                <Button
+                                                    type="submit"
+                                                    variant="destructive"
+                                                    :disabled="isProcessing || isConfirmed"
+                                                    @click="deleteEvent(event.slug)"
+                                                >
+                                                    Delete account
+                                                </Button>
                                             </DialogFooter>
                                         </div>
                                     </DialogContent>
@@ -175,28 +165,21 @@ const isConfirmed = computed(() => {
                         </TableRow>
                     </TableBody>
                 </Table>
-                <Pagination @update:page="handlePageChange" v-slot="{ page }" :items-per-page="events.per_page" :total="events.total" :default-page="events.current_page">
-                    <PaginationContent v-slot="{ items }">
-                        <PaginationPrevious />
-
-                        <template v-for="(item, index) in items" :key="index">
-                            <PaginationItem
-                                v-if="item.type === 'page'"
-                                :value="item.value"
-                                :is-active="item.value === page"
-                            >
-                                {{ item.value }}
-                            </PaginationItem>
-                        </template>
-
-                        <PaginationEllipsis :index="4" />
-
-                        <PaginationNext />
-                    </PaginationContent>
-                </Pagination>
+                <CustomPagination
+                    :links="pagination.links"
+                    :meta="{
+                        current_page: pagination.current_page,
+                        from: pagination.from,
+                        to: pagination.to,
+                        total: pagination.total,
+                    }"
+                    :filters="filters"
+                />
+            </div>
+            <div v-else>
+                You don't have any events
             </div>
         </div>
-
     </AppLayout>
 </template>
 

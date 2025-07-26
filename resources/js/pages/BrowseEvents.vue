@@ -10,7 +10,7 @@ import CustomPagination from '@/components/CustomPagination.vue';
 import { useEchoPublic } from '@laravel/echo-vue';
 
 type View = 'grid' | 'list';
-const props = defineProps<{categories: Category[], filters: EventFilters, locations: string [] }>();
+defineProps<{categories: Category[], filters: EventFilters, locations: string [] }>();
 const page = usePage();
 const events = computed<Event[]>(() => page.props.events.data)
 const pagination = computed(() => page.props.events)

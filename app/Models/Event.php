@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -17,6 +16,8 @@ use Illuminate\Support\Str;
  * Class Event
  *
  * @property int $id
+ * @property int $user_id
+ * @property int $category_id
  * @property string $title
  * @property string $date
  * @property int $capacity
@@ -37,6 +38,8 @@ class Event extends Model
     protected $fillable = [
         'title',
         'description',
+        'category_id',
+        'user_id',
         'capacity',
         'date',
         'slug',
@@ -74,9 +77,13 @@ class Event extends Model
     public function getImageUrlAttribute(): ?string
     {
         $value = $this->image;
-        if(!Str::startsWith($value, 'http')) {
+        if (! Str::startsWith($value, 'http')) {
+            if (! $value) {
+                return null;
+            }
             $value = asset(Storage::url($this->image));
         }
+
         return $value;
     }
 
@@ -84,6 +91,7 @@ class Event extends Model
     {
         return $this->attendees()->count();
     }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id');
@@ -94,20 +102,36 @@ class Event extends Model
         return $this->hasMany(Attendee::class, 'event_id');
     }
 
+    public function activeAttendees(): HasMany
+    {
+        return $this->hasMany(Attendee::class)->whereNull('cancelled_at');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function faqs(): HasMany
+    {
+        return $this->hasMany(FAQ::class, 'event_id');
+    }
+
+    public function speakers(): HasMany
+    {
+        return $this->hasMany(Speaker::class, 'event_id');
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class, 'event_id');
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';
     }
 
-    /**
-     * @param Builder $query
-     * @param array $filters
-     * @return Builder
-     */
     public function scopeFilter(Builder $query, array $filters): Builder
     {
         return $query->when($filters['searchQuery'] ?? null,
@@ -115,12 +139,12 @@ class Event extends Model
             ->when($filters['categories'] ?? null,
                 fn (Builder $query, $categoryId): Builder => $query->whereIn('category_id', $categoryId)
             )
-            ->when(!empty($filters['locations']) && is_array($filters['locations']),
+            ->when(! empty($filters['locations']) && is_array($filters['locations']),
                 fn (Builder $query) => $query->location($filters['locations'])
             )
-            ->when($filters['minPrice'] ?? null, fn($q, $v) => $q->where('price', '>=', $v))
-            ->when($filters['maxPrice'] ?? null, fn($q, $v) => $q->where('price', '<=', $v))
-            ->when($filters['dateRange'] ?? null, fn($q, $v) => $q->whereBetween('date', [now()->startOfDay(), now()->addDays((int)$v)->endOfDay()]));
+            ->when($filters['minPrice'] ?? null, fn ($q, $v) => $q->where('price', '>=', $v))
+            ->when($filters['maxPrice'] ?? null, fn ($q, $v) => $q->where('price', '<=', $v))
+            ->when($filters['dateRange'] ?? null, fn ($q, $v) => $q->whereBetween('date', [now()->startOfDay(), now()->addDays((int) $v)->endOfDay()]));
     }
 
     public function scopeLocation(Builder $query, array $locations): Builder
@@ -156,5 +180,4 @@ class Event extends Model
     {
         return $query;
     }
-
 }

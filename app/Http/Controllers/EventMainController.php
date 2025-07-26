@@ -14,7 +14,7 @@ class EventMainController extends Controller
     {
         return Inertia::render('MainPage',
             [
-                'events' => Event::latest()->paginate(15),
+                'events' => Event::latest()->whereFuture('date')->paginate(15),
             ]
         );
     }
@@ -28,7 +28,7 @@ class EventMainController extends Controller
     {
         return Inertia::render('BrowseEvents',
             [
-                'events' => Event::filter($request->all())->paginate(15)->withQueryString(),
+                'events' => Event::filter($request->all())->whereFuture('date')->paginate(15)->withQueryString(),
                 'filters' => $request->all(),
                 'categories' => Category::all(),
                 'locations' => Event::select('city', 'country')

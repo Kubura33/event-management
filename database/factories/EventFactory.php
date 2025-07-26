@@ -24,7 +24,7 @@ class EventFactory extends Factory
             'user_id' => User::all()->random()->id,
             'slug' => $this->faker->slug(),
             'description' => $this->faker->paragraph(),
-            'date' => $this->faker->dateTimeThisYear,
+            'date' => $this->faker->dateTimeThisYear(now()->addMonths(4)),
             'price' => $this->faker->randomNumber(3),
             'capacity' => $this->faker->randomNumber(3),
             'address' => $this->faker->address(),

@@ -14,7 +14,7 @@ const props = defineProps<{
         to: number;
         total: number;
     };
-    filters: EventFilters;
+    filters?: EventFilters;
 }>();
 
 const goToPage = (url: string | null) => {

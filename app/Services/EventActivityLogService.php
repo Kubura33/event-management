@@ -5,17 +5,24 @@ namespace App\Services;
 use App\Models\Attendee;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class EventActivityLogService
 {
     public function get(): Collection
     {
         $user = auth()->user();
-        return Cache::remember(
-            $this->cacheKey($user->id),
-            now()->addHour(),
-            fn () => $this->build()
-        );
+        try{
+            return Cache::remember(
+                $this->cacheKey($user->id),
+                now()->addHour(),
+                fn () => $this->build()
+            );
+        }catch (\Exception $exception){
+            Log::info("An error occurred while retrieving cache from redis: " . $exception->getMessage());
+        }
+        return collect();
+
     }
 
     public function set(): void {

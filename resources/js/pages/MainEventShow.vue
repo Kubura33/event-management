@@ -15,10 +15,6 @@ const showModal = ref<boolean>(false);
 <template>
     <GuestLayout>
         <EventShow :event="event" />
-        <EventSignUpModal @close="showModal = false" :event-title="event.title" :show="showModal" :event-id="event.id" :event-slug="event.slug" />
-        <div class="mx-auto flex max-w-5xl justify-end px-4 py-10 sm:px-6 lg:px-8">
-            <Button @click="showModal = true">Sign up now!</Button>
-        </div>
     </GuestLayout>
 </template>
 
