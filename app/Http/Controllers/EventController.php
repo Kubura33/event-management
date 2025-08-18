@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\DTOs\EventData;
 use App\Http\Requests\EventRequest;
 use App\Models\Category;
 use App\Models\Event;
 use App\Services\EventService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,12 +26,22 @@ class EventController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        $eventData = null;
+
+        if ($request->has('event_id')) {
+            $eventId = $request->get('event_id');
+            \Log::info("Event ID: " . $eventId);
+            $eventData = EventData::fromModel(Event::with(['faqs', 'speakers', 'schedules'])->findOrFail($eventId), $request->get('step'));
+        }
 
         return Inertia::render('Events/Create',
             [
                 'categories' => Category::all(),
+                'event' => $eventData,
+                'event_id' => (int)$request->get('event_id', null),
+                'step' => $request->get('step', 'overview'),
             ]);
     }
 
@@ -50,36 +62,32 @@ class EventController extends Controller
     public function store(EventRequest $request): RedirectResponse
     {
         $user = auth()->user();
-        $step = $request->get('step');
-        $final = $request->boolean('final', false); // assuming you're passing this flag
-
-        // If the image is uploaded, handle it before anything else
-//        $overview = $request->safe()->except(['image']);
-//
-//        if ($request->hasFile('image')) {
-//            $path = $request->file('image')->store('events', 'public');
-//            $overview['image_path'] = $path;
-//        }
-
+        $eventDto = $request->toDto();
         // Initialize the service
         $service = new EventService(
             user: $user,
+            eventDto: $eventDto,
         );
+        $step = $request->get('step');
+        $final = $request->boolean('final', false); // assuming you're passing this flag
 
-        // Inject the step data
-        $service->step($step, $request->validated())->finalize($final);
+        // Save the step
+        $event = $service->saveStep($step)
+        ->finalize($final);
+        \Log::info("Event ID after saving step: " . ($event->id ?? 'null'));
 
         // Either save to PendingEvent or finalize to full Event
         if ($final) {
             return redirect()->route('events.index');
         }
 
-        return redirect()->back();
+        return redirect()->route('events.create', ['step' => $service->nextStep, 'event_id' => $event->id]);
+
     }
 
     public function update(EventRequest $request, Event $event): RedirectResponse
     {
-        if($request->user()->cannot('update', $event)) {
+        if ($request->user()->cannot('update', $event)) {
             abort(403);
         }
         $event->update($request->safe()->except('image'));
@@ -96,7 +104,7 @@ class EventController extends Controller
 
     public function destroy(Event $event): RedirectResponse
     {
-        if(auth()->user()->cannot('delete', $event)) {
+        if (auth()->user()->cannot('delete', $event)) {
             abort(403);
         }
         $event->delete();

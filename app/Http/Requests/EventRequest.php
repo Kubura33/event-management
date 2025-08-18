@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\DTOs\EventData;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EventRequest extends FormRequest
@@ -23,12 +24,16 @@ class EventRequest extends FormRequest
     {
         $step = $this->get('step');
 
-        return match ($step) {
+        return array_merge(match ($step) {
             'overview' => $this->getOverviewRules(),
             'schedules' => $this->getScheduleRules(),
             'speakers' => $this->getSpeakerRules(),
             'faqs' => $this->getFAQRules(),
-        };
+        },
+            [
+            'event_id' => ['nullable', 'integer', 'exists:events,id']
+            ]
+        );
 
     }
 
@@ -64,7 +69,8 @@ class EventRequest extends FormRequest
             'schedules.*.title' => ['required', 'string', 'max:255'],
             'schedules.*.description' => ['nullable', 'string', 'max:1000'],
             'schedules.*.date' => ['required', 'date'],
-            'schedules.*.time' => ['required', 'string'], // can be changed to date_format if needed
+            'schedules.*.startTime' => ['required', 'string'], // Frontend uses startTime
+            'schedules.*.endTime' => ['required', 'string'], // Frontend uses endTime
         ];
     }
 
@@ -101,6 +107,18 @@ class EventRequest extends FormRequest
             'faqs.*.question' => ['required', 'string', 'max:255'],
             'faqs.*.answer' => ['required', 'string', 'max:1000'],
         ];
+    }
+
+    public function toDto(): ?EventData{
+        $data = $this->all();
+
+        return match ($this->get('step')) {
+            'overview' => EventData::overview($data),
+            'schedules' => EventData::schedules($data),
+            'speakers' => EventData::speakers($data),
+            'faqs' => EventData::faqs($data),
+            default => null,
+        };
     }
 
     public function messages(): array

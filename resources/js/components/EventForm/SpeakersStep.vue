@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Event } from '@/types/event';
 
-defineEmits(['next', 'back']);
+const emit = defineEmits(['next', 'back']);
+const props = defineProps<{
+    event: Event,
+    step: string,
+}>();
 
 type Speaker = {
     name: string;
@@ -12,7 +16,7 @@ type Speaker = {
     twitter: string;
     website: string;
     photo: File | null;
-    photoUrl: string | null;
+    photo_url: string | null;
 };
 
 const addSpeaker = () => {
@@ -24,15 +28,23 @@ const addSpeaker = () => {
         twitter: '',
         website: '',
         photo: null,
-        photoUrl: null,
+        photo_url: null,
     });
 };
 
-const form = useForm<{
-    speakers: Speaker[];
-    step: string;
-}>({
-    speakers: [
+// Initialize speakers from event data if available, otherwise use an empty speaker
+const initialSpeakers = props.event?.speakers?.length
+    ? props.event.speakers.map((speaker: any) => ({
+        name: speaker.name || '',
+        title: speaker.role || '',
+        bio: speaker.bio || '',
+        linkedin: speaker.linkedin || '',
+        twitter: speaker.twitter || '',
+        website: speaker.website || '',
+        photo: null,
+        photo_url: speaker.photo ? `/storage/${speaker.photo}` : null,
+      }))
+    : [
         {
             name: '',
             title: '',
@@ -41,10 +53,18 @@ const form = useForm<{
             twitter: '',
             website: '',
             photo: null,
-            photoUrl: null,
+            photo_url: null,
         },
-    ],
+    ];
+
+const form = useForm<{
+    speakers: Speaker[];
+    step: string;
+    event_id?: number | null;
+}>({
+    speakers: initialSpeakers,
     step: 'speakers',
+    event_id: props.event.id || null,
 });
 const removeSpeaker = (index: number) => {
     form.speakers.splice(index, 1);
@@ -55,14 +75,18 @@ const handlePhotoUpload = (e: Event, index: number) => {
     const file = target?.files?.[0];
     if (file) {
         form.speakers[index].photo = file;
-        form.speakers[index].photoUrl = URL.createObjectURL(file);
+        form.speakers[index].photo_url = URL.createObjectURL(file);
     }
 };
 
 const removePhoto = (index: number) => {
     form.speakers[index].photo = null;
-    form.speakers[index].photoUrl = null;
+    form.speakers[index].photo_url = null;
 };
+
+const goNext = () => {
+    emit('next', form);
+}
 </script>
 
 <template>
@@ -75,7 +99,7 @@ const removePhoto = (index: number) => {
                     <!-- Photo Upload -->
                     <div class="md:col-span-1">
                         <label class="mb-1 block text-sm font-medium text-gray-700">Speaker Photo</label>
-                        <label class="custom-file-upload" v-if="!speaker.photoUrl">
+                        <label class="custom-file-upload" v-if="!speaker.photo_url">
                             <svg
                                 class="mx-auto h-10 w-10 text-gray-400"
                                 fill="none"
@@ -94,8 +118,8 @@ const removePhoto = (index: number) => {
                             <input type="file" accept="image/*" class="hidden" @change="(e) => handlePhotoUpload(e, index)" />
                         </label>
 
-                        <div v-if="speaker.photoUrl" class="file-preview">
-                            <img :src="speaker.photoUrl" alt="Preview" />
+                        <div v-if="speaker.photo_url" class="file-preview">
+                            <img :src="speaker.photo_url" alt="Preview" />
                             <div class="remove-image" @click="removePhoto(index)">
                                 <svg
                                     class="h-5 w-5 text-gray-600"
@@ -195,7 +219,7 @@ const removePhoto = (index: number) => {
                 Back: Schedule
             </button>
             <button
-                @click="$emit('next')"
+                @click.prevent="goNext"
                 type="button"
                 class="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >

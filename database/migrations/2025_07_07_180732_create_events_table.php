@@ -21,12 +21,13 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->date('start_date');
             $table->date('end_date');
-            $table->integer('capacity');
-            $table->double('price');
-            $table->string('address');
-            $table->string('city');
-            $table->string('country');
+            $table->integer('capacity')->nullable(); //In case event is online and it has unlimited capacity
+            $table->double('price')->nullable(); //In case the event is free
+            $table->string('address')->nullable(); //Address information nullable in case the event is online
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
             $table->string('zipcode')->nullable();
+            $table->string("status")->default("draft");
             $table->timestamps();
         });
     }

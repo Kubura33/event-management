@@ -5,7 +5,12 @@ import { ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 
 const emits = defineEmits(['next']);
-defineProps<{ categories: Category[] }>();
+const props = defineProps<{
+    categories: Category[],
+    event?: any,
+    event_id?: number | null,
+    onSubmit?: (formData: any) => void
+}>();
 
 const overviewForm = useForm<{
     title: string;
@@ -22,28 +27,30 @@ const overviewForm = useForm<{
     image: File | null;
     tags: string[];
     step: string;
+    event_id?: number | null;
 }>({
-    title: '',
-    category_id: null,
-    start_date: '',
-    price: 0,
-    capacity: 0,
-    end_date: '',
-    country: '',
-    city: '',
-    address: '',
-    zipcode: '',
-    description: '',
+    title: props.event?.title || '',
+    category_id: props.event?.category_id || null,
+    start_date: props.event?.start_date || '',
+    price: props.event?.price || 0,
+    capacity: props.event?.capacity || 0,
+    end_date: props.event?.end_date || '',
+    country: props.event?.country || '',
+    city: props.event?.city || '',
+    address: props.event?.address || '',
+    zipcode: props.event?.zipcode || '',
+    description: props.event?.description || '',
     image: null,
-    tags: [],
-    step: "overview"
+    tags: props.event?.tags || [],
+    step: "overview",
+    event_id: props.event_id || null
 });
 
 //Tags manipulation
 
 const maxTags = 5;
 const inputValue = ref('');
-const tags = ref<string[]>([]);
+const tags = ref<string[]>(props.event?.tags || []);
 
 const addTag = () => {
     const trimmed = inputValue.value.trim();
@@ -64,12 +71,50 @@ const removeTag = (tag: string) => {
     tags.value = tags.value.filter((t) => t !== tag);
 };
 
-const submitStep = () => {
-    overviewForm.post(route('events.store'),{
-        onSuccess: () => emits('next')
-    })
-}
-</script>
+//Thumbnail manipulation
+const thumbnailPreview = ref<string | null>(null);
+const thumbnailInput = ref<HTMLInputElement | null>(null);
+
+const handleThumbnailChange = (e: Event) => {
+    const file = (e.target as HTMLInputElement)?.files?.[0];
+    if (file) {
+        overviewForm.image = file;
+        const reader = new FileReader();
+        reader.onload = () => {
+            thumbnailPreview.value = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const removeThumbnail = () => {
+    overviewForm.image = null;
+    thumbnailPreview.value = null;
+    if (thumbnailInput.value) {
+        thumbnailInput.value.value = '';
+    }
+};
+
+// Optional drag & drop handlers
+const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+        overviewForm.image = file;
+        const reader = new FileReader();
+        reader.onload = () => {
+            thumbnailPreview.value = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+};
+const goNext = () => {
+    emits('next', overviewForm);
+};</script>
 
 <template>
     <div id="step-1" class="form-step active">
@@ -239,8 +284,14 @@ const submitStep = () => {
             <!-- Event Thumbnail -->
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">Event Thumbnail <span class="text-red-500">*</span></label>
-                <div class="mt-1">
-                    <label for="event-thumbnail" class="custom-file-upload">
+
+                <div
+                    class="mt-1 custom-file-upload relative"
+                    @drop="handleDrop"
+                    @dragover="handleDragOver"
+                    v-if="!thumbnailPreview"
+                >
+                    <label for="event-thumbnail" class="cursor-pointer block">
                         <svg
                             class="mx-auto h-12 w-12 text-gray-400"
                             fill="none"
@@ -255,27 +306,32 @@ const submitStep = () => {
                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             ></path>
                         </svg>
-                        <p class="mt-1 text-sm text-gray-600">Click to upload or drag and drop</p>
+                        <p class="mt-1 text-sm text-gray-600">Click or drag to upload</p>
                         <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
                     </label>
-                    <input id="event-thumbnail" name="event-thumbnail" type="file" accept="image/*" class="hidden" required />
-                    <div id="thumbnail-preview" class="file-preview">
-                        <img id="thumbnail-image" src="#" alt="Thumbnail preview" />
-                        <div class="remove-image" id="remove-thumbnail">
-                            <svg
-                                class="h-5 w-5 text-gray-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <InputError :message="overviewForm.errors.image" />
+
+                    <input
+                        id="event-thumbnail"
+                        ref="thumbnailInput"
+                        name="image"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="handleThumbnailChange"
+                    />
                 </div>
+                <div v-if="thumbnailPreview" class="file-preview mt-4 relative">
+                    <img :src="thumbnailPreview" alt="Thumbnail preview" class="rounded-lg shadow-md max-h-48 mx-auto" />
+                    <button type="button" class="absolute top-1 right-1 text-gray-600 hover:text-red-500" @click="removeThumbnail">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <InputError :message="overviewForm.errors.image" />
+
             </div>
+
             <!-- Event Tags -->
             <div>
                 <label for="event-tags" class="mb-1 block text-sm font-medium text-gray-700">Tags</label>
@@ -304,7 +360,7 @@ const submitStep = () => {
 
         <div class="mt-8 flex justify-end">
             <button
-                @click.prevent="submitStep"
+                @click.prevent="goNext"
                 type="button"
                 id="next-to-step-2"
                 class="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
@@ -332,7 +388,6 @@ const submitStep = () => {
 }
 
 .file-preview {
-    display: none;
     position: relative;
     margin-top: 1rem;
 }

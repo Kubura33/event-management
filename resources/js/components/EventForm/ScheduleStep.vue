@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import {Event} from '@/types/event';
+
 defineEmits(['next', 'back']);
 
+const props = defineProps<{event: Event, step: string, event_id?: number | null}>()
+console.log(props.event, props.step)
 type ScheduleItem = {
     title: string;
     description: string;
@@ -37,6 +41,18 @@ const form = useForm<{
 
 const removeScheduleItem = (index: number) => {
     form.schedules.splice(index, 1);
+};
+
+const submitStep = () => {
+    const payload: any = { ...form.data(), step: 'schedules' };
+    if (props.event_id) {
+        payload.event_id = props.event_id;
+    }
+    form.post(route('events.store'), {
+        forceFormData: true,
+        data: payload,
+        onSuccess: () => emit('next')
+    });
 };
 </script>
 <template>
@@ -142,7 +158,6 @@ const removeScheduleItem = (index: number) => {
                 Back: Overview
             </button>
             <button
-                @click="$emit('next')"
                 type="button"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md text-sm font-medium"
             >

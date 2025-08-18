@@ -1,26 +1,38 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { Event } from '@/types/event';
 
-defineEmits(['back']);
+const emits = defineEmits(['back', 'next']);
+const props = defineProps<{event: Event, step: string}>();
 
 type FAQItem = {
     question: string;
     answer: string;
 };
 
-const form = useForm<{
-    faqs: FAQItem[];
-    step: string;
-    final: boolean;
-}>({
-    faqs: [
+// Initialize FAQs from event data if available, otherwise use an empty FAQ item
+const initialFaqs = props.event?.faqs?.length
+    ? props.event.faqs.map((faq: any) => ({
+        question: faq.question || '',
+        answer: faq.answer || '',
+      }))
+    : [
         {
             question: '',
             answer: '',
         },
-    ],
+    ];
+
+const form = useForm<{
+    faqs: FAQItem[];
+    step: string;
+    final: boolean;
+    event_id?: number | null;
+}>({
+    faqs: initialFaqs,
     step: 'faqs',
-    final: true
+    final: true,
+    event_id: props.event.id || null
 });
 
 const addFAQ = () => {
@@ -33,6 +45,10 @@ const addFAQ = () => {
 const removeFAQ = (index: number) => {
     form.faqs.splice(index, 1);
 };
+
+const goNext = () => {
+    emits('next', form);
+}
 </script>
 
 <template>
@@ -98,7 +114,12 @@ const removeFAQ = (index: number) => {
             >
                 Back: Speakers
             </button>
-            <button type="submit" class="rounded-md bg-green-600 px-6 py-2 text-sm font-medium text-white hover:bg-green-700">Create Event</button>
+            <button
+                type="button"
+                @click.prevent="goNext"
+                class="rounded-md bg-green-600 px-6 py-2 text-sm font-medium text-white hover:bg-green-700">
+                Create Event
+            </button>
         </div>
     </div>
 </template>

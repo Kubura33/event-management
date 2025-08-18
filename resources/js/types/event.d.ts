@@ -6,7 +6,7 @@ export interface Event {
     description: string;
     attendees?: number;
     capacity: number;
-    imageUrl?: string;
+    image_url?: string;
     price?: number;
     city: string;
     address: string;
@@ -14,6 +14,13 @@ export interface Event {
     zipcode?: string;
     created_at?: string;
     updated_at?: string;
+    category_id?: number;
+    start_date?: string;
+    end_date?: string;
+    tags?: string[];
+    schedules?: any[];
+    speakers?: any[];
+    faqs?: any[];
 }
 
 export type Category = {

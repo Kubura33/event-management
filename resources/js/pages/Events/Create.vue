@@ -6,7 +6,7 @@ import ScheduleStep from '@/components/EventForm/ScheduleStep.vue';
 import SpeakersStep from '@/components/EventForm/SpeakersStep.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { BreadcrumbItem } from '@/types';
-import { Category } from '@/types/event';
+import { Category, Event } from '@/types/event';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -21,61 +21,17 @@ const breadCrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const props = defineProps<{ categories: Category[] }>();
+const props = defineProps<{ categories: Category[], event?: Event, step: string, event_id?: number | null }>();
 
 const stepProps = {
-    1: { categories: props.categories },         // For OverviewStep.vue
-    2: { }, // For ScheduleStep.vue
-    3: {  },           // For SpeakersStep.vue
-    4: {  },               // For FAQStep.vue
+    1: { categories: props.categories, event_id: props.event_id }, // Pass event_id
+    2: { step: props.step, event: props.event, event_id: props.event_id },
+    3: { step: props.step, event: props.event, event_id: props.event_id },
+    4: { step: props.step, event: props.event, event_id: props.event_id },
 } as Record<number, Record<string, any>>;
 
-const imageFile = ref<File | null>(null);
-const chosenCategory = ref<Category | null>(null);
-const eventForm = useForm<{
-    category_id: number | null;
-    title: string;
-    description: string;
-    date: string;
-    capacity: number;
-    price: number;
-    city: string;
-    address: string;
-    country: string;
-    zipcode: string;
-    image: File | null;
-}>({
-    category_id: null,
-    title: '',
-    description: '',
-    date: '',
-    capacity: 0,
-    price: 0,
-    city: '',
-    address: '',
-    country: '',
-    zipcode: '',
-    image: null as File | null,
-});
 
-const imagePreviewUrl = ref<string | null>(null);
-const handleImageUpload = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        imageFile.value = file;
-        imagePreviewUrl.value = URL.createObjectURL(file);
-        eventForm.image = target.files[0];
-    }
-};
 
-const addEvent = () => {
-    eventForm.category_id = chosenCategory.value?.id;
-    eventForm.post(route('events.store'), {
-        forceFormData: true,
-        onSuccess: () => {},
-    });
-};
 
 const steps = [
     { id: 1, name: 'Overview', component: OverviewStep },
